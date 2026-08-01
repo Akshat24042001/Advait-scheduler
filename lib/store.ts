@@ -72,6 +72,13 @@ let projects = [...PROJECTS]
 let tasks = [...TASKS]
 let logs = [...LOGS]
 
+export function resetStore() {
+  members = MEMBERS.map(m => ({ ...m }))
+  projects = PROJECTS.map(p => ({ ...p }))
+  tasks = TASKS.map(t => ({ ...t }))
+  logs = LOGS.map(l => ({ ...l }))
+}
+
 export const store = {
   members: {
     list: () => members.filter(m => m.active),

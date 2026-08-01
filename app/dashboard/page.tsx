@@ -230,6 +230,7 @@ export default function Dashboard() {
                 <div className="pr-4 min-w-0">
                   {editingId === task.id ? (
                     <input
+                      data-testid="title-edit-input"
                       autoFocus
                       value={editTitle}
                       onChange={e => setEditTitle(e.target.value)}
