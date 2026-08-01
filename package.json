@@ -1,0 +1,28 @@
+{
+  "name": "advait-scheduler",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.5.4",
+    "next": "^14.2.35",
+    "postcss": "^8.5.25",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^4.3.3",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
