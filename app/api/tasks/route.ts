@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { store } from '@/lib/store'
+import { listTasks, listActiveMembers, listProjects, createTask } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const project = searchParams.get('project')
-  const member = searchParams.get('member')
-  const status = searchParams.get('status')
+  const filters = {
+    project: searchParams.get('project') ?? undefined,
+    member: searchParams.get('member') ?? undefined,
+    status: searchParams.get('status') ?? undefined,
+  }
 
-  let tasks = store.tasks.list()
-  const members = store.members.all()
-  const projects = store.projects.list()
-
-  if (project) tasks = tasks.filter(t => t.project_id === project)
-  if (member) tasks = tasks.filter(t => t.assigned_to === member)
-  if (status && status !== 'all') tasks = tasks.filter(t => t.status === status)
+  const [tasks, members, projects] = await Promise.all([
+    listTasks(filters),
+    listActiveMembers(),
+    listProjects(),
+  ])
 
   const enriched = tasks.map(t => ({
     ...t,
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const task = store.tasks.create({
+  const task = await createTask({
     title: body.title,
     notes: body.notes ?? '',
     project_id: body.project_id ?? null,

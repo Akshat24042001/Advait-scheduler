@@ -1,7 +1,6 @@
-import { store } from './store'
+import { getScheduledTasks, listAllMembers, listProjects, clearSendTonight } from './db'
 
 export function buildWhatsAppLink(phone: string, message: string): string {
-  // phone format: 91XXXXXXXXXX → strip country code prefix for wa.me
   const clean = phone.replace(/^\+/, '')
   return `https://wa.me/${clean}?text=${encodeURIComponent(message)}`
 }
@@ -13,16 +12,21 @@ export function buildTaskMessage(memberName: string, taskLines: string[]): strin
 
 export type SendResult = {
   member: string
+  memberId: string
   phone: string
   whatsappLink: string
   taskCount: number
+  taskIds: string[]
+  message: string
   success: boolean
 }
 
-export function buildSendPayload(): SendResult[] {
-  const tasks = store.tasks.list().filter(t => t.send_tonight && t.status !== 'done')
-  const members = store.members.all()
-  const projects = store.projects.list()
+export async function buildSendPayload(): Promise<SendResult[]> {
+  const [tasks, members, projects] = await Promise.all([
+    getScheduledTasks(),
+    listAllMembers(),
+    listProjects(),
+  ])
 
   const grouped: Record<string, { member: (typeof members)[0]; tasks: typeof tasks }> = {}
 
@@ -45,18 +49,19 @@ export function buildSendPayload(): SendResult[] {
     const message = buildTaskMessage(member.name, lines)
     return {
       member: member.name,
+      memberId: member.id,
       phone: member.phone,
       whatsappLink: buildWhatsAppLink(member.phone, message),
       taskCount: mt.length,
+      taskIds: mt.map(t => t.id),
+      message,
       success: true,
     }
   })
 }
 
-export function markTasksSent() {
-  const tasks = store.tasks.list().filter(t => t.send_tonight && t.status !== 'done')
-  for (const t of tasks) {
-    store.tasks.update(t.id, { send_tonight: false })
-  }
+export async function markTasksSent(): Promise<number> {
+  const tasks = await getScheduledTasks()
+  await clearSendTonight(tasks.map(t => t.id))
   return tasks.length
 }

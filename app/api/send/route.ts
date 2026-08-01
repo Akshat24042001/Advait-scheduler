@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildSendPayload, markTasksSent } from '@/lib/sendTasks'
-import { store } from '@/lib/store'
+import { createLog } from '@/lib/db'
 
 export async function GET() {
-  // Preview what will be sent without actually sending
-  const payload = buildSendPayload()
+  const payload = await buildSendPayload()
   return NextResponse.json(payload)
 }
 
@@ -16,24 +15,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const payload = buildSendPayload()
+  const payload = await buildSendPayload()
 
-  // Log each member's send
   for (const r of payload) {
-    const member = store.members.all().find(m => m.name === r.member)
-    const sentTasks = store.tasks.list().filter(t => t.send_tonight && t.status !== 'done' && t.assigned_to === member?.id)
-    if (member) {
-      store.logs.create({
-        member_id: member.id,
-        task_ids: sentTasks.map(t => t.id),
-        message_sent: `${sentTasks.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`,
-        sent_at: new Date().toISOString(),
-        status: 'success',
-      })
-    }
+    await createLog({
+      member_id: r.memberId,
+      task_ids: r.taskIds,
+      message_sent: r.message,
+      sent_at: new Date().toISOString(),
+      status: 'success',
+    })
   }
 
-  markTasksSent()
+  await markTasksSent()
 
   return NextResponse.json({ sent: payload.length, results: payload })
 }
